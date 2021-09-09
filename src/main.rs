@@ -1,6 +1,6 @@
 use std::fmt::{self};
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone)]
 enum Expr {
     Number(i64),
     Add(Box<Expr>, Box<Expr>),
@@ -17,6 +17,12 @@ impl fmt::Display for Expr {
     }
 }
 
+impl fmt::Debug for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        write!(f, "<<{}>>", self)
+    }
+}
+
 fn main() {
     let expr = Expr::Add(
         Box::new(Expr::Multiply(
@@ -28,5 +34,5 @@ fn main() {
             Box::new(Expr::Number(4)),
         )),
     );
-    println!("{}", expr);
+    println!("{:?}", expr);
 }

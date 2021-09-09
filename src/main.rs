@@ -7,10 +7,50 @@ enum Expr {
     Multiply(Box<Expr>, Box<Expr>),
 }
 
+impl Expr {
+    fn is_reducible(&self) -> bool {
+        match self {
+            Self::Number(_) => false,
+            Self::Add(_, _) => true,
+            Self::Multiply(_, _) => true,
+        }
+    }
+
+    fn reduce(&self) -> Self {
+        match self {
+            Self::Number(_) => self.clone(),
+            Self::Add(l, r) => {
+                if l.is_reducible() {
+                    Self::Add(Box::new(l.reduce()), r.clone())
+                } else if r.is_reducible() {
+                    Self::Add(l.clone(), Box::new(r.reduce()))
+                } else {
+                    match (*l.clone(), *r.clone()) {
+                        (Self::Number(a), Self::Number(b)) => Self::Number(a + b),
+                        _ => panic!("invalid expr"),
+                    }
+                }
+            }
+            Self::Multiply(l, r) => {
+                if l.is_reducible() {
+                    Self::Add(Box::new(l.reduce()), r.clone())
+                } else if r.is_reducible() {
+                    Self::Add(l.clone(), Box::new(r.reduce()))
+                } else {
+                    match (*l.clone(), *r.clone()) {
+                        (Self::Number(a), Self::Number(b)) => Self::Number(a * b),
+                        _ => panic!("invalid expr"),
+                    }
+                }
+            }
+        }
+    }
+}
+
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         match self {
-            Self::Number(it) => write!(f, "{}", it),
+            Self::Number(n) => write!(f, "{}", n),
             Self::Add(l, r) => write!(f, "{} + {}", l, r),
             Self::Multiply(l, r) => write!(f, "{} * {}", l, r),
         }
@@ -20,6 +60,28 @@ impl fmt::Display for Expr {
 impl fmt::Debug for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         write!(f, "<<{}>>", self)
+    }
+}
+
+struct Machine {
+    expr: Expr,
+}
+
+impl Machine {
+    fn new(expr: Expr) -> Self {
+        Self { expr }
+    }
+
+    fn step(&mut self) {
+        self.expr = self.expr.reduce();
+    }
+
+    fn run(&mut self) {
+        while self.expr.is_reducible() {
+            println!("{}", self.expr);
+            self.step();
+        }
+        println!("{}", self.expr);
     }
 }
 
@@ -34,5 +96,6 @@ fn main() {
             Box::new(Expr::Number(4)),
         )),
     );
-    println!("{:?}", expr);
+    let mut machine = Machine::new(expr);
+    machine.run();
 }

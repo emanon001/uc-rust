@@ -1,8 +1,20 @@
+use std::fmt::{self};
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 enum Expr {
     Number(i64),
     Add(Box<Expr>, Box<Expr>),
     Multiply(Box<Expr>, Box<Expr>),
+}
+
+impl fmt::Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        match self {
+            Self::Number(it) => write!(f, "{}", it),
+            Self::Add(l, r) => write!(f, "{} + {}", l, r),
+            Self::Multiply(l, r) => write!(f, "{} * {}", l, r),
+        }
+    }
 }
 
 fn main() {
@@ -16,5 +28,5 @@ fn main() {
             Box::new(Expr::Number(4)),
         )),
     );
-    println!("{:?}", expr);
+    println!("{}", expr);
 }

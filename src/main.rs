@@ -5,6 +5,7 @@ enum Expr {
     Number(i64),
     Add(Box<Expr>, Box<Expr>),
     Multiply(Box<Expr>, Box<Expr>),
+    Boolean(bool),
 }
 
 impl Expr {
@@ -13,6 +14,7 @@ impl Expr {
             Self::Number(_) => false,
             Self::Add(_, _) => true,
             Self::Multiply(_, _) => true,
+            Self::Boolean(_) => false,
         }
     }
 
@@ -43,6 +45,7 @@ impl Expr {
                     }
                 }
             }
+            Self::Boolean(_) => self.clone(),
         }
     }
 }
@@ -53,6 +56,7 @@ impl fmt::Display for Expr {
             Self::Number(n) => write!(f, "{}", n),
             Self::Add(l, r) => write!(f, "{} + {}", l, r),
             Self::Multiply(l, r) => write!(f, "{} * {}", l, r),
+            Self::Boolean(b) => write!(f, "{}", b),
         }
     }
 }

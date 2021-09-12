@@ -35,9 +35,9 @@ impl Expr {
             }
             Self::Multiply(l, r) => {
                 if l.is_reducible() {
-                    Self::Add(Box::new(l.reduce()), r.clone())
+                    Self::Multiply(Box::new(l.reduce()), r.clone())
                 } else if r.is_reducible() {
-                    Self::Add(l.clone(), Box::new(r.reduce()))
+                    Self::Multiply(l.clone(), Box::new(r.reduce()))
                 } else {
                     match (*l.clone(), *r.clone()) {
                         (Self::Number(a), Self::Number(b)) => Self::Number(a * b),

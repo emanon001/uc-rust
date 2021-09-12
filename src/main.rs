@@ -89,6 +89,33 @@ impl fmt::Debug for Expr {
     }
 }
 
+#[derive(PartialEq, Eq, Clone)]
+enum Stmt {
+    DoNothing,
+}
+
+impl Stmt {
+    fn is_reducible(&self) -> bool {
+        match self {
+            Self::DoNothing => false,
+        }
+    }
+}
+
+impl fmt::Display for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        match self {
+            Self::DoNothing => write!(f, "do-nothing"),
+        }
+    }
+}
+
+impl fmt::Debug for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        write!(f, "<<{}>>", self)
+    }
+}
+
 struct Machine {
     expr: Expr,
     env: Environment,

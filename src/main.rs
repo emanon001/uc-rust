@@ -6,6 +6,7 @@ enum Expr {
     Add(Box<Expr>, Box<Expr>),
     Multiply(Box<Expr>, Box<Expr>),
     Boolean(bool),
+    LessThan(Box<Expr>, Box<Expr>),
 }
 
 impl Expr {
@@ -15,6 +16,7 @@ impl Expr {
             Self::Add(_, _) => true,
             Self::Multiply(_, _) => true,
             Self::Boolean(_) => false,
+            Self::LessThan(_, _) => true,
         }
     }
 
@@ -46,6 +48,18 @@ impl Expr {
                 }
             }
             Self::Boolean(_) => self.clone(),
+            Self::LessThan(l, r) => {
+                if l.is_reducible() {
+                    Self::LessThan(Box::new(l.reduce()), r.clone())
+                } else if r.is_reducible() {
+                    Self::LessThan(l.clone(), Box::new(r.reduce()))
+                } else {
+                    match (*l.clone(), *r.clone()) {
+                        (Self::Number(a), Self::Number(b)) => Self::Boolean(a < b),
+                        _ => panic!("invalid expr"),
+                    }
+                }
+            }
         }
     }
 }
@@ -57,6 +71,7 @@ impl fmt::Display for Expr {
             Self::Add(l, r) => write!(f, "{} + {}", l, r),
             Self::Multiply(l, r) => write!(f, "{} * {}", l, r),
             Self::Boolean(b) => write!(f, "{}", b),
+            Self::LessThan(l, r) => write!(f, "{} < {}", l, r),
         }
     }
 }
@@ -90,14 +105,11 @@ impl Machine {
 }
 
 fn main() {
-    let expr = Expr::Add(
-        Box::new(Expr::Multiply(
-            Box::new(Expr::Number(1)),
+    let expr = Expr::LessThan(
+        Box::new(Expr::Number(5)),
+        Box::new(Expr::Add(
             Box::new(Expr::Number(2)),
-        )),
-        Box::new(Expr::Multiply(
-            Box::new(Expr::Number(3)),
-            Box::new(Expr::Number(4)),
+            Box::new(Expr::Number(2)),
         )),
     );
     let mut machine = Machine::new(expr);

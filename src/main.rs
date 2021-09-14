@@ -92,6 +92,11 @@ impl fmt::Debug for Expr {
 enum Stmt {
     DoNothing,
     Assign(String, Expr),
+    If {
+        condition: Expr,
+        consequence: Box<Stmt>,
+        alternative: Box<Stmt>,
+    },
 }
 
 impl Stmt {
@@ -99,6 +104,7 @@ impl Stmt {
         match self {
             Self::DoNothing => false,
             Self::Assign(_, _) => true,
+            Self::If { .. } => true,
         }
     }
 
@@ -113,6 +119,28 @@ impl Stmt {
                     (Self::DoNothing, new_env)
                 }
             }
+            Self::If {
+                condition,
+                consequence,
+                alternative,
+            } => {
+                if condition.is_reducible() {
+                    (
+                        Self::If {
+                            condition: condition.reduce(env),
+                            consequence: consequence.clone(),
+                            alternative: alternative.clone(),
+                        },
+                        env.clone(),
+                    )
+                } else {
+                    match condition {
+                        Expr::Boolean(true) => (*consequence.clone(), env.clone()),
+                        Expr::Boolean(false) => (*alternative.clone(), env.clone()),
+                        _ => panic!("invalid condition"),
+                    }
+                }
+            }
             _ => panic!("`reduce()` not supported"),
         }
     }
@@ -123,6 +151,15 @@ impl fmt::Display for Stmt {
         match self {
             Self::DoNothing => write!(f, "do-nothing"),
             Self::Assign(name, val) => write!(f, "{} = {}", name, val),
+            Self::If {
+                condition,
+                consequence,
+                alternative,
+            } => write!(
+                f,
+                "if ({}) {{ {} }} else {{ {} }}",
+                condition, consequence, alternative
+            ),
         }
     }
 }
@@ -159,15 +196,13 @@ impl Machine {
 }
 
 fn main() {
-    let stmt = Stmt::Assign(
-        "x".into(),
-        Expr::Add(
-            Box::new(Expr::Variable("x".into())),
-            Box::new(Expr::Number(1)),
-        ),
-    );
+    let stmt = Stmt::If {
+        condition: Expr::Variable("x".into()),
+        consequence: Stmt::Assign("y".into(), Expr::Number(1)).into(),
+        alternative: Stmt::Assign("y".into(), Expr::Number(2)).into(),
+    };
     let mut env = HashMap::new();
-    env.insert("x".to_string(), Expr::Number(2));
+    env.insert("x".to_string(), Expr::Boolean(true));
     let mut machine = Machine::new(stmt, env);
     machine.run();
 }

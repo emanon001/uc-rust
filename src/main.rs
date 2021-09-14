@@ -27,7 +27,6 @@ impl Expr {
 
     fn reduce(&self, env: &Environment) -> Self {
         match self {
-            Self::Number(_) => self.clone(),
             Self::Add(l, r) => {
                 if l.is_reducible() {
                     Self::Add(Box::new(l.reduce(env)), r.clone())
@@ -52,7 +51,6 @@ impl Expr {
                     }
                 }
             }
-            Self::Boolean(_) => self.clone(),
             Self::LessThan(l, r) => {
                 if l.is_reducible() {
                     Self::LessThan(Box::new(l.reduce(env)), r.clone())
@@ -66,6 +64,7 @@ impl Expr {
                 }
             }
             Self::Variable(name) => env[name].clone(),
+            _ => panic!("`reduce()` not supported"),
         }
     }
 }

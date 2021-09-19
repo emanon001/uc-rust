@@ -33,7 +33,7 @@ impl Expr {
                 } else if r.is_reducible() {
                     Self::Add(l.clone(), Box::new(r.reduce(env)))
                 } else {
-                    match (*l.clone(), *r.clone()) {
+                    match (l.as_ref(), r.as_ref()) {
                         (Self::Number(a), Self::Number(b)) => Self::Number(a + b),
                         _ => panic!("invalid expr"),
                     }
@@ -45,7 +45,7 @@ impl Expr {
                 } else if r.is_reducible() {
                     Self::Multiply(l.clone(), Box::new(r.reduce(env)))
                 } else {
-                    match (*l.clone(), *r.clone()) {
+                    match (l.as_ref(), r.as_ref()) {
                         (Self::Number(a), Self::Number(b)) => Self::Number(a * b),
                         _ => panic!("invalid expr"),
                     }
@@ -57,7 +57,7 @@ impl Expr {
                 } else if r.is_reducible() {
                     Self::LessThan(l.clone(), Box::new(r.reduce(env)))
                 } else {
-                    match (*l.clone(), *r.clone()) {
+                    match (l.as_ref(), r.as_ref()) {
                         (Self::Number(a), Self::Number(b)) => Self::Boolean(a < b),
                         _ => panic!("invalid expr"),
                     }
@@ -147,7 +147,7 @@ impl Stmt {
                 }
             }
             Self::Sequence { first, second } => match first.as_ref() {
-                &Self::DoNothing => (*second.clone(), env.clone()),
+                Self::DoNothing => (*second.clone(), env.clone()),
                 _ => {
                     let (reduced_first, reduced_env) = first.reduce(env);
                     (

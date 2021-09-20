@@ -101,6 +101,10 @@ enum Stmt {
         first: Box<Stmt>,
         second: Box<Stmt>,
     },
+    While {
+        condition: Expr,
+        body: Box<Stmt>,
+    },
 }
 
 impl Stmt {
@@ -110,6 +114,7 @@ impl Stmt {
             Self::Assign(..) => true,
             Self::If { .. } => true,
             Self::Sequence { .. } => true,
+            Self::While { .. } => true,
         }
     }
 
@@ -159,6 +164,18 @@ impl Stmt {
                     )
                 }
             },
+            Self::While { condition, body } => (
+                Self::If {
+                    condition: condition.clone(),
+                    consequence: Self::Sequence {
+                        first: body.clone(),
+                        second: self.clone().into(),
+                    }
+                    .into(),
+                    alternative: Self::DoNothing.into(),
+                },
+                env.clone(),
+            ),
             _ => panic!("`reduce()` not supported"),
         }
     }
@@ -179,6 +196,7 @@ impl fmt::Display for Stmt {
                 condition, consequence, alternative
             ),
             Self::Sequence { first, second } => write!(f, "{}; {}", first, second),
+            Self::While { condition, body } => write!(f, "while ({}) {{ {} }}", condition, body),
         }
     }
 }
@@ -215,19 +233,16 @@ impl Machine {
 }
 
 fn main() {
-    let stmt = Stmt::Sequence {
-        first: Stmt::Assign(
+    let stmt = Stmt::While {
+        condition: Expr::LessThan(Expr::Variable("x".into()).into(), Expr::Number(5).into()).into(),
+        body: Stmt::Assign(
             "x".into(),
-            Expr::Add(Expr::Number(1).into(), Expr::Number(1).into()).into(),
-        )
-        .into(),
-        second: Stmt::Assign(
-            "y".into(),
-            Expr::Add(Expr::Variable("x".into()).into(), Expr::Number(3).into()).into(),
+            Expr::Multiply(Expr::Variable("x".into()).into(), Expr::Number(3).into()).into(),
         )
         .into(),
     };
-    let env = HashMap::new();
+    let mut env = HashMap::new();
+    env.insert("x".into(), Expr::Number(1));
     let mut machine = Machine::new(stmt, env);
     machine.run();
 }

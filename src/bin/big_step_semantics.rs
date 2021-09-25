@@ -59,6 +59,11 @@ impl fmt::Debug for Expr {
 enum Stmt {
     DoNothing,
     Assign(String, Expr),
+    If {
+        condition: Expr,
+        consequence: Box<Stmt>,
+        alternative: Box<Stmt>,
+    },
 }
 
 impl Stmt {
@@ -67,9 +72,18 @@ impl Stmt {
             Self::DoNothing => env.clone(),
             Self::Assign(name, expr) => {
                 let mut new_env = env.clone();
-                new_env.insert(name.into(), expr.clone());
+                new_env.insert(name.into(), expr.evalute(env));
                 new_env
             }
+            Self::If {
+                condition,
+                consequence,
+                alternative,
+            } => match condition.evalute(env) {
+                Expr::Boolean(true) => consequence.evalute(env),
+                Expr::Boolean(false) => alternative.evalute(env),
+                _ => panic!("invalid condition"),
+            },
             _ => panic!("`evalute()` not supported"),
         }
     }
@@ -80,6 +94,15 @@ impl fmt::Display for Stmt {
         match self {
             Self::DoNothing => write!(f, "do-nothing"),
             Self::Assign(name, expr) => write!(f, "{} = {}", name, expr),
+            Self::If {
+                condition,
+                consequence,
+                alternative,
+            } => write!(
+                f,
+                "if ({}) {{ {} }} else {{ {} }}",
+                condition, consequence, alternative
+            ),
         }
     }
 }
@@ -144,6 +167,24 @@ mod tests {
         env.insert("y".into(), Expr::Number(2));
         let mut expected = env.clone();
         expected.insert("x".into(), Expr::Number(1));
+        assert_eq!(expected, stmt.evalute(&env));
+    }
+
+    #[test]
+    fn evalute_if() {
+        let stmt = Stmt::If {
+            condition: Expr::LessThan(Expr::Variable("x".into()).into(), Expr::Number(3).into()),
+            consequence: Stmt::Assign(
+                "y".into(),
+                Expr::Multiply(Expr::Variable("x".into()).into(), Expr::Number(2).into()).into(),
+            )
+            .into(),
+            alternative: Stmt::DoNothing.into(),
+        };
+        let mut env = HashMap::new();
+        env.insert("x".into(), Expr::Number(2));
+        let mut expected = env.clone();
+        expected.insert("y".into(), Expr::Number(4));
         assert_eq!(expected, stmt.evalute(&env));
     }
 }

@@ -68,6 +68,10 @@ enum Stmt {
         first: Box<Stmt>,
         second: Box<Stmt>,
     },
+    While {
+        condition: Expr,
+        body: Box<Stmt>,
+    },
 }
 
 impl Stmt {
@@ -89,7 +93,11 @@ impl Stmt {
                 _ => panic!("invalid condition"),
             },
             Self::Sequence { first, second } => second.evalute(&first.evalute(env)),
-            _ => panic!("`evalute()` not supported"),
+            Self::While { condition, body } => match condition.evalute(env) {
+                Expr::Boolean(true) => self.evalute(&body.evalute(env)),
+                Expr::Boolean(false) => env.clone(),
+                _ => panic!("invalid condition"),
+            },
         }
     }
 }
@@ -109,6 +117,7 @@ impl fmt::Display for Stmt {
                 condition, consequence, alternative
             ),
             Self::Sequence { first, second } => write!(f, "{}; {}", first, second),
+            Self::While { condition, body } => write!(f, "while ({}) {{ {} }}", condition, body),
         }
     }
 }
@@ -208,6 +217,25 @@ mod tests {
         let mut expected = env.clone();
         expected.insert("x".into(), Expr::Number(2));
         expected.insert("y".into(), Expr::Number(4));
+        assert_eq!(expected, stmt.evalute(&env));
+    }
+
+    #[test]
+    fn evalute_while() {
+        let stmt = Stmt::While {
+            condition: Expr::LessThan(Expr::Variable("x".into()).into(), Expr::Number(5).into())
+                .into(),
+            body: Stmt::Assign(
+                "x".into(),
+                Expr::Multiply(Expr::Variable("x".into()).into(), Expr::Number(3).into()).into(),
+            )
+            .into(),
+        };
+        let mut env = HashMap::new();
+        env.insert("x".into(), Expr::Number(1));
+
+        let mut expected = env.clone();
+        expected.insert("x".into(), Expr::Number(9));
         assert_eq!(expected, stmt.evalute(&env));
     }
 }

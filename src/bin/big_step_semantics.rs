@@ -75,27 +75,26 @@ enum Stmt {
 }
 
 impl Stmt {
-    fn evalute(&self, env: &Environment) -> Environment {
+    fn evalute(&self, mut env: Environment) -> Environment {
         match self {
-            Self::DoNothing => env.clone(),
+            Self::DoNothing => env,
             Self::Assign(name, expr) => {
-                let mut new_env = env.clone();
-                new_env.insert(name.into(), expr.evalute(env));
-                new_env
+                env.insert(name.into(), expr.evalute(&env));
+                env
             }
             Self::If {
                 condition,
                 consequence,
                 alternative,
-            } => match condition.evalute(env) {
+            } => match condition.evalute(&env) {
                 Expr::Boolean(true) => consequence.evalute(env),
                 Expr::Boolean(false) => alternative.evalute(env),
                 _ => panic!("invalid condition"),
             },
-            Self::Sequence { first, second } => second.evalute(&first.evalute(env)),
-            Self::While { condition, body } => match condition.evalute(env) {
-                Expr::Boolean(true) => self.evalute(&body.evalute(env)),
-                Expr::Boolean(false) => env.clone(),
+            Self::Sequence { first, second } => second.evalute(first.evalute(env)),
+            Self::While { condition, body } => match condition.evalute(&env) {
+                Expr::Boolean(true) => self.evalute(body.evalute(env)),
+                Expr::Boolean(false) => env,
                 _ => panic!("invalid condition"),
             },
         }
@@ -172,7 +171,7 @@ mod tests {
         let stmt = Stmt::DoNothing;
         let mut env = HashMap::new();
         env.insert("x".into(), Expr::Number(2));
-        assert_eq!(env.clone(), stmt.evalute(&env));
+        assert_eq!(env.clone(), stmt.evalute(env));
     }
 
     #[test]
@@ -182,7 +181,7 @@ mod tests {
         env.insert("y".into(), Expr::Number(2));
         let mut expected = env.clone();
         expected.insert("x".into(), Expr::Number(1));
-        assert_eq!(expected, stmt.evalute(&env));
+        assert_eq!(expected, stmt.evalute(env));
     }
 
     #[test]
@@ -200,7 +199,7 @@ mod tests {
         env.insert("x".into(), Expr::Number(2));
         let mut expected = env.clone();
         expected.insert("y".into(), Expr::Number(4));
-        assert_eq!(expected, stmt.evalute(&env));
+        assert_eq!(expected, stmt.evalute(env));
     }
 
     #[test]
@@ -217,7 +216,7 @@ mod tests {
         let mut expected = env.clone();
         expected.insert("x".into(), Expr::Number(2));
         expected.insert("y".into(), Expr::Number(4));
-        assert_eq!(expected, stmt.evalute(&env));
+        assert_eq!(expected, stmt.evalute(env));
     }
 
     #[test]
@@ -236,6 +235,6 @@ mod tests {
 
         let mut expected = env.clone();
         expected.insert("x".into(), Expr::Number(9));
-        assert_eq!(expected, stmt.evalute(&env));
+        assert_eq!(expected, stmt.evalute(env));
     }
 }

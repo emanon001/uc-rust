@@ -57,12 +57,14 @@ impl fmt::Debug for Expr {
 
 #[derive(PartialEq, Eq, Clone)]
 enum Stmt {
+    DoNothing,
     Assign(String, Expr),
 }
 
 impl Stmt {
     fn evalute(&self, env: &Environment) -> Environment {
         match self {
+            Self::DoNothing => env.clone(),
             Self::Assign(name, expr) => {
                 let mut new_env = env.clone();
                 new_env.insert(name.into(), expr.clone());
@@ -76,6 +78,7 @@ impl Stmt {
 impl fmt::Display for Stmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         match self {
+            Self::DoNothing => write!(f, "do-nothing"),
             Self::Assign(name, expr) => write!(f, "{} = {}", name, expr),
         }
     }
@@ -124,6 +127,14 @@ mod tests {
         env.insert("x".into(), Expr::Number(2));
         env.insert("y".into(), Expr::Number(5));
         assert_eq!(Expr::Boolean(true), expr.evalute(&env));
+    }
+
+    #[test]
+    fn evalute_donothing() {
+        let stmt = Stmt::DoNothing;
+        let mut env = HashMap::new();
+        env.insert("x".into(), Expr::Number(2));
+        assert_eq!(env.clone(), stmt.evalute(&env));
     }
 
     #[test]

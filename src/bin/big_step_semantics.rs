@@ -64,6 +64,10 @@ enum Stmt {
         consequence: Box<Stmt>,
         alternative: Box<Stmt>,
     },
+    Sequence {
+        first: Box<Stmt>,
+        second: Box<Stmt>,
+    },
 }
 
 impl Stmt {
@@ -84,6 +88,7 @@ impl Stmt {
                 Expr::Boolean(false) => alternative.evalute(env),
                 _ => panic!("invalid condition"),
             },
+            Self::Sequence { first, second } => second.evalute(&first.evalute(env)),
             _ => panic!("`evalute()` not supported"),
         }
     }
@@ -103,6 +108,7 @@ impl fmt::Display for Stmt {
                 "if ({}) {{ {} }} else {{ {} }}",
                 condition, consequence, alternative
             ),
+            Self::Sequence { first, second } => write!(f, "{}; {}", first, second),
         }
     }
 }
@@ -184,6 +190,23 @@ mod tests {
         let mut env = HashMap::new();
         env.insert("x".into(), Expr::Number(2));
         let mut expected = env.clone();
+        expected.insert("y".into(), Expr::Number(4));
+        assert_eq!(expected, stmt.evalute(&env));
+    }
+
+    #[test]
+    fn evalute_sequence() {
+        let stmt = Stmt::Sequence {
+            first: Stmt::Assign("x".into(), Expr::Number(2).into()).into(),
+            second: Stmt::Assign(
+                "y".into(),
+                Expr::Multiply(Expr::Variable("x".into()).into(), Expr::Number(2).into()).into(),
+            )
+            .into(),
+        };
+        let env = HashMap::new();
+        let mut expected = env.clone();
+        expected.insert("x".into(), Expr::Number(2));
         expected.insert("y".into(), Expr::Number(4));
         assert_eq!(expected, stmt.evalute(&env));
     }

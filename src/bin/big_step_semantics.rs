@@ -55,6 +55,38 @@ impl fmt::Debug for Expr {
     }
 }
 
+#[derive(PartialEq, Eq, Clone)]
+enum Stmt {
+    Assign(String, Expr),
+}
+
+impl Stmt {
+    fn evalute(&self, env: &Environment) -> Environment {
+        match self {
+            Self::Assign(name, expr) => {
+                let mut new_env = env.clone();
+                new_env.insert(name.into(), expr.clone());
+                new_env
+            }
+            _ => panic!("`evalute()` not supported"),
+        }
+    }
+}
+
+impl fmt::Display for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        match self {
+            Self::Assign(name, expr) => write!(f, "{} = {}", name, expr),
+        }
+    }
+}
+
+impl fmt::Debug for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        write!(f, "<<{}>>", self)
+    }
+}
+
 fn main() {
     let env = HashMap::new();
     println!("{}", Expr::Number(1).evalute(&env));
@@ -92,5 +124,15 @@ mod tests {
         env.insert("x".into(), Expr::Number(2));
         env.insert("y".into(), Expr::Number(5));
         assert_eq!(Expr::Boolean(true), expr.evalute(&env));
+    }
+
+    #[test]
+    fn eval_assign() {
+        let stmt = Stmt::Assign("x".into(), Expr::Number(1));
+        let mut env = HashMap::new();
+        env.insert("y".into(), Expr::Number(2));
+        let mut expected = env.clone();
+        expected.insert("x".into(), Expr::Number(1));
+        assert_eq!(expected, stmt.evalute(&env));
     }
 }

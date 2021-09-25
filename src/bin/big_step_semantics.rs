@@ -97,14 +97,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn eval_number() {
+    fn evalute_number() {
         let n = Expr::Number(23);
         let env = HashMap::new();
         assert_eq!(n, n.evalute(&env));
     }
 
     #[test]
-    fn eval_boolean() {
+    fn evalute_boolean() {
         let t = Expr::Boolean(true);
         let mut env = HashMap::new();
         assert_eq!(t, t.evalute(&mut env));
@@ -115,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn eval_less_than() {
+    fn evalute_less_than() {
         let expr = Expr::LessThan(
             Expr::Add(Expr::Variable("x".into()).into(), Expr::Number(2).into()).into(),
             Expr::Variable("y".into()).into(),
@@ -127,7 +127,7 @@ mod tests {
     }
 
     #[test]
-    fn eval_assign() {
+    fn evalute_assign() {
         let stmt = Stmt::Assign("x".into(), Expr::Number(1));
         let mut env = HashMap::new();
         env.insert("y".into(), Expr::Number(2));

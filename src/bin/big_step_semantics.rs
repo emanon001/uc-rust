@@ -31,7 +31,6 @@ impl Expr {
                 (Self::Number(a), Self::Number(b)) => Self::Boolean(a < b),
                 _ => panic!("invalid expr"),
             },
-            _ => panic!("`evalute()` not supported"),
         }
     }
 }
@@ -152,6 +151,20 @@ mod tests {
         let f = Expr::Boolean(false);
         let env = HashMap::new();
         assert_eq!(f, f.evalute(&env));
+    }
+
+    #[test]
+    fn evalute_add() {
+        let expr = Expr::Add(Expr::Number(1).into(), Expr::Number(2).into());
+        let env = HashMap::new();
+        assert_eq!(Expr::Number(3), expr.evalute(&env));
+    }
+
+    #[test]
+    fn evalute_multiply() {
+        let expr = Expr::Multiply(Expr::Number(2).into(), Expr::Number(3).into());
+        let env = HashMap::new();
+        assert_eq!(Expr::Number(6), expr.evalute(&env));
     }
 
     #[test]
